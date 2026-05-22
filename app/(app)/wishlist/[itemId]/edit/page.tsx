@@ -23,7 +23,7 @@ export default function EditWishlistItemPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [form, setForm] = useState({
-    club: "", season: "", shirt_type: "", size: "", player_name: "",
+    club: "", season: "", shirt_type: "any", size: "", player_name: "",
     priority: "Medium", notes: "", status: "Searching",
   })
 
@@ -38,7 +38,7 @@ export default function EditWishlistItemPage() {
       if (data) setForm({
         club: data.club || "",
         season: data.season || "",
-        shirt_type: data.shirt_type || "",
+        shirt_type: data.shirt_type || "any",
         size: data.size || "",
         player_name: data.player_name || "",
         priority: data.priority || "Medium",
@@ -57,7 +57,7 @@ export default function EditWishlistItemPage() {
     const { error: err } = await supabase.from("wishlist_items").update({
       ...form,
       season: form.season || null,
-      shirt_type: form.shirt_type || null,
+      shirt_type: form.shirt_type === "any" ? null : form.shirt_type,
       size: form.size || null,
       player_name: form.player_name || null,
       notes: form.notes || null,
@@ -86,7 +86,7 @@ export default function EditWishlistItemPage() {
               <div className="space-y-2"><Label>Shirt Type</Label>
                 <Select value={form.shirt_type} onValueChange={v => set("shirt_type", v)}>
                   <SelectTrigger><SelectValue placeholder="Any type" /></SelectTrigger>
-                  <SelectContent><SelectItem value="">Any type</SelectItem>{SHIRT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="any">Any type</SelectItem>{SHIRT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2"><Label>Size</Label><Input value={form.size} onChange={e => set("size", e.target.value)} /></div>

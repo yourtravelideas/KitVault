@@ -20,7 +20,7 @@ const STATUS_OPTIONS = [
   { value: "open_to_trade", label: "Open to Trade" },
   { value: "not_for_sale", label: "Not for Sale" },
 ]
-const CURRENCIES = ["USD", "EUR", "GBP", "SEK", "NOK", "DKK", "AUD", "CAD"]
+const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK", "AUD", "CAD"]
 
 interface FormData {
   title: string
@@ -73,7 +73,7 @@ export default function AddShirtPage() {
     purchase_date: "",
     purchase_price: "",
     estimated_value: "",
-    currency: "EUR",
+    currency: "DKK",
     notes: "",
     status: "owned",
   })

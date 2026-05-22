@@ -23,16 +23,23 @@ export default function SignupPage() {
     setLoading(true)
     setError("")
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signUp({
+    const { data, error: err } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         data: { display_name: form.displayName },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
     if (err) {
       setError(err.message)
       setLoading(false)
+      return
+    }
+    // When email confirmation is disabled, signUp returns an active session.
+    if (data.session) {
+      router.push("/dashboard")
+      router.refresh()
       return
     }
     setSuccess(true)

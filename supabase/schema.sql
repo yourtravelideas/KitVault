@@ -1,6 +1,6 @@
 -- KitVault — full database schema
 -- Run this against a fresh Supabase project's SQL editor.
--- If you have already deployed an earlier version, run the migration in
+-- If you have already deployed an earlier version, run the migrations in
 -- supabase/migrations/ instead of re-running this file.
 
 -- Enable UUID extension
@@ -18,8 +18,8 @@ create table public.profiles (
   avatar_url text,
   bio text,
   location text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 -- Collections table
@@ -28,10 +28,10 @@ create table public.collections (
   user_id uuid references auth.users on delete cascade not null,
   name text not null,
   description text,
-  is_public boolean default false,
+  is_public boolean not null default false,
   cover_image_url text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 -- Shirts table
@@ -53,18 +53,19 @@ create table public.shirts (
   condition text,
   authenticity_type text not null default 'Replica'
     check (authenticity_type in ('Replica', 'Player Issue', 'Match Worn', 'Unknown')),
-  signed boolean default false,
+  signed boolean not null default false,
   patches text,
   purchase_source text,
   purchase_date date,
   purchase_price numeric(10,2) check (purchase_price is null or purchase_price >= 0),
   estimated_value numeric(10,2) check (estimated_value is null or estimated_value >= 0),
-  currency text default 'USD',
+  currency text not null default 'DKK'
+    check (currency in ('DKK', 'EUR', 'USD', 'GBP', 'SEK', 'NOK', 'AUD', 'CAD')),
   notes text,
   status text not null default 'owned'
     check (status in ('owned', 'open_to_trade', 'not_for_sale')),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 -- Shirt images table
@@ -73,9 +74,9 @@ create table public.shirt_images (
   shirt_id uuid references public.shirts on delete cascade not null,
   url text not null,
   storage_path text,
-  is_primary boolean default false,
-  display_order integer default 0,
-  created_at timestamptz default now()
+  is_primary boolean not null default false,
+  display_order integer not null default 0,
+  created_at timestamptz not null default now()
 );
 
 -- Wishlist table
@@ -93,8 +94,8 @@ create table public.wishlist_items (
   notes text,
   status text not null default 'Searching'
     check (status in ('Searching', 'Found', 'Paused')),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 -- ---------------------------------------------------------------------------
@@ -120,20 +121,30 @@ alter table public.wishlist_items enable row level security;
 
 -- Profiles policies
 create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
-create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
+create policy "Users can update own profile" on public.profiles for update
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
 create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = id);
 
 -- Collections policies
+-- is_public is kept as a flag for a future public showcase, but no shirt data
+-- is exposed publicly yet (see the shirts/shirt_images policies below).
 create policy "Users can view own collections" on public.collections for select using (auth.uid() = user_id or is_public = true);
 create policy "Users can insert own collections" on public.collections for insert with check (auth.uid() = user_id);
-create policy "Users can update own collections" on public.collections for update using (auth.uid() = user_id);
+create policy "Users can update own collections" on public.collections for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 create policy "Users can delete own collections" on public.collections for delete using (auth.uid() = user_id);
 
 -- Shirts policies
-create policy "Users can view shirts in accessible collections" on public.shirts for select using (
-  auth.uid() = user_id or
-  exists (select 1 from public.collections where id = collection_id and is_public = true)
-);
+-- NOTE: shirt rows are owner-only for now. They carry sensitive fields
+-- (purchase_price, purchase_source, estimated_value, purchase_date, notes),
+-- so they must NOT be exposed just because a collection is marked public.
+-- A future public showcase should read from a dedicated, security-barrier
+-- VIEW that selects only non-sensitive columns (club, country, season,
+-- shirt_type, manufacturer, sponsor, player_name, shirt_number, signed,
+-- patches) — never from this table directly.
+create policy "Users can view own shirts" on public.shirts for select using (auth.uid() = user_id);
 -- Insert/update are only allowed when the target collection is owned by the user.
 create policy "Users can insert shirts in own collections" on public.shirts for insert with check (
   auth.uid() = user_id and
@@ -148,11 +159,10 @@ create policy "Users can update shirts in own collections" on public.shirts for 
 create policy "Users can delete own shirts" on public.shirts for delete using (auth.uid() = user_id);
 
 -- Shirt images policies
-create policy "Users can view images of accessible shirts" on public.shirt_images for select using (
-  exists (select 1 from public.shirts where id = shirt_id and (
-    user_id = auth.uid() or
-    exists (select 1 from public.collections where id = collection_id and is_public = true)
-  ))
+-- Owner-only, consistent with the shirts policy above. A future public
+-- showcase should expose images via the same safe public view, not here.
+create policy "Users can view own shirt images" on public.shirt_images for select using (
+  exists (select 1 from public.shirts where id = shirt_id and user_id = auth.uid())
 );
 create policy "Users can manage own shirt images" on public.shirt_images for all
   using (

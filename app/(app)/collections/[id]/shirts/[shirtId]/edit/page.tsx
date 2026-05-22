@@ -19,7 +19,7 @@ const STATUS_OPTIONS = [
   { value: "open_to_trade", label: "Open to Trade" },
   { value: "not_for_sale", label: "Not for Sale" },
 ]
-const CURRENCIES = ["USD", "EUR", "GBP", "SEK", "NOK", "DKK", "AUD", "CAD"]
+const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK", "AUD", "CAD"]
 
 export default function EditShirtPage() {
   const router = useRouter()
@@ -37,7 +37,7 @@ export default function EditShirtPage() {
     manufacturer: "", sponsor: "", size: "", player_name: "", shirt_number: "",
     condition: "", authenticity_type: "Replica", signed: false, patches: "",
     purchase_source: "", purchase_date: "", purchase_price: "", estimated_value: "",
-    currency: "EUR", notes: "", status: "owned",
+    currency: "DKK", notes: "", status: "owned",
   })
 
   function set(field: string, value: string | boolean) {
@@ -72,7 +72,7 @@ export default function EditShirtPage() {
           purchase_date: data.purchase_date || "",
           purchase_price: data.purchase_price?.toString() || "",
           estimated_value: data.estimated_value?.toString() || "",
-          currency: data.currency || "EUR",
+          currency: data.currency || "DKK",
           notes: data.notes || "",
           status: data.status || "owned",
         })
