@@ -29,7 +29,7 @@ export default function EditShirtPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
-  const [existingImages, setExistingImages] = useState<{ id: string; url: string; is_primary: boolean }[]>([])
+  const [existingImages, setExistingImages] = useState<{ id: string; url: string; is_primary: boolean; storage_path: string | null }[]>([])
   const [newImages, setNewImages] = useState<File[]>([])
   const [newPreviews, setNewPreviews] = useState<string[]>([])
   const [form, setForm] = useState({
@@ -49,7 +49,7 @@ export default function EditShirtPage() {
       const supabase = createClient()
       const { data } = await supabase
         .from("shirts")
-        .select("*, shirt_images(id, url, is_primary)")
+        .select("*, shirt_images(id, url, is_primary, storage_path)")
         .eq("id", shirtId)
         .single()
       if (data) {
@@ -91,10 +91,13 @@ export default function EditShirtPage() {
     setNewPreviews(newFiles.map(f => URL.createObjectURL(f)))
   }
 
-  async function removeExistingImage(imgId: string) {
+  async function removeExistingImage(img: { id: string; storage_path: string | null }) {
     const supabase = createClient()
-    await supabase.from("shirt_images").delete().eq("id", imgId)
-    setExistingImages(imgs => imgs.filter(i => i.id !== imgId))
+    if (img.storage_path) {
+      await supabase.storage.from("shirt-images").remove([img.storage_path])
+    }
+    await supabase.from("shirt_images").delete().eq("id", img.id)
+    setExistingImages(imgs => imgs.filter(i => i.id !== img.id))
   }
 
   function removeNewImage(index: number) {
@@ -142,6 +145,7 @@ export default function EditShirtPage() {
           await supabase.from("shirt_images").insert({
             shirt_id: shirtId,
             url: publicUrl,
+            storage_path: path,
             is_primary: existingImages.length === 0 && i === 0,
             display_order: startOrder + i,
           })
@@ -176,7 +180,7 @@ export default function EditShirtPage() {
                   <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 group">
                     <img src={img.url} alt="" className="w-full h-full object-cover" />
                     {img.is_primary && <div className="absolute bottom-0 left-0 right-0 bg-slate-900/70 text-white text-[10px] text-center py-1">Primary</div>}
-                    <button type="button" onClick={() => removeExistingImage(img.id)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button type="button" onClick={() => removeExistingImage(img)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <X className="h-3 w-3" />
                     </button>
                   </div>

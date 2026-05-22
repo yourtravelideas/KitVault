@@ -144,6 +144,7 @@ export default function AddShirtPage() {
           await supabase.from("shirt_images").insert({
             shirt_id: shirt.id,
             url: publicUrl,
+            storage_path: path,
             is_primary: i === 0,
             display_order: i,
           })

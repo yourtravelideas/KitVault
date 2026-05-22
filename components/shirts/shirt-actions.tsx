@@ -15,6 +15,19 @@ export function ShirtActions({ shirtId, collectionId }: { shirtId: string; colle
   async function handleDelete() {
     setDeleting(true)
     const supabase = createClient()
+
+    // Remove the underlying storage objects before the rows cascade away.
+    const { data: images } = await supabase
+      .from("shirt_images")
+      .select("storage_path")
+      .eq("shirt_id", shirtId)
+    const paths = (images ?? [])
+      .map(img => img.storage_path)
+      .filter((p): p is string => !!p)
+    if (paths.length > 0) {
+      await supabase.storage.from("shirt-images").remove(paths)
+    }
+
     await supabase.from("shirts").delete().eq("id", shirtId)
     router.push(`/collections/${collectionId}`)
     router.refresh()

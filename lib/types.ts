@@ -50,6 +50,7 @@ export interface ShirtImage {
   id: string
   shirt_id: string
   url: string
+  storage_path: string | null
   is_primary: boolean
   display_order: number
   created_at: string

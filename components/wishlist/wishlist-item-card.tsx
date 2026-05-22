@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { MoreHorizontal, Edit, Trash2, Search, Pause, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import type { Tables } from "@/lib/database.types"
 
 const priorityColors: Record<string, "default" | "destructive" | "warning" | "secondary"> = {
   Grail: "default",
@@ -23,7 +24,7 @@ const statusIcons: Record<string, React.ReactNode> = {
   Paused: <Pause className="h-3 w-3" />,
 }
 
-export function WishlistItemCard({ item }: { item: Record<string, string> }) {
+export function WishlistItemCard({ item }: { item: Tables<"wishlist_items"> }) {
   const router = useRouter()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)

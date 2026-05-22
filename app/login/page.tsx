@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -15,6 +15,13 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+
+  // Surface errors handed back by the auth callback (e.g. expired link).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const callbackError = params.get("error")
+    if (callbackError) setError(callbackError)
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
